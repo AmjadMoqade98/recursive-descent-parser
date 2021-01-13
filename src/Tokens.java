@@ -1,5 +1,7 @@
 import java.util.*;
-
+/**
+ * Constant class for the used Tokens in the program
+ */
 public class Tokens {
     final static String MAIN = "main()";
     final static String CONST = "const";

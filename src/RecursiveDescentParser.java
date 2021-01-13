@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -39,10 +40,18 @@ public class RecursiveDescentParser {
         Float,
     }
 
+    // out code input
     private String input;
+    // pointer to the code
     private int index = 0;
+
+    // used after var declaration to check if value should be float of int.
     private VarType currentVarType;
 
+    /**
+     * constructor
+     * @param input
+     */
     public RecursiveDescentParser(String input) {
         input = input.replaceAll("\n", "");
         input = input.replaceAll("\r", "");
@@ -50,21 +59,53 @@ public class RecursiveDescentParser {
         this.input = input;
     }
 
+    /**
+     * increment our input pointer by specific value
+     * @param length
+     */
+    private void next(int length) {
+        if (index + length < (input.length())) index += length;
+    }
+
+
+    /**
+     *
+     * @param word
+     * @return boolean
+     * to find if our input at specific index match a certain string
+     */
     private boolean matchString(String word) {
         if (index + word.length() >= input.length()) return false;
         if (word.length() == 1) return input.charAt(index) == word.charAt(0);
-        return CustomMatcher.matchWord(input.substring(index, index + word.length()), word);
+        return input.substring(index, index + word.length()).equals(word);
     }
 
+    /**
+     *
+     * @param target
+     * @param regex
+     * @return boolean
+     * check if a given string match a regex
+     */
     private boolean matchRegex(String target, String regex) {
-        return CustomMatcher.matchRegex(target, regex);
+        return Pattern.compile(regex).matcher(target).matches();
     }
 
+    /**
+     * get our input from current pointer
+     * @param token
+     * @return Strin
+     */
     private String getBeforeToken(String token) {
         if (index + token.length() >= input.length()) return "";
         return input.substring(index, input.substring(index).indexOf(token) + index);
     }
 
+    /**
+     * get String from our input from current pointer until we reach a certain token(string)
+     * @param tokens
+     * @return String
+     */
     private String getBeforeTokens(Set<String> tokens) {
         List<Character> list = new ArrayList<>();
         int tempIndex = index;
@@ -82,11 +123,26 @@ public class RecursiveDescentParser {
         return list.stream().map(String::valueOf).collect(Collectors.joining());
     }
 
-    private void next(int length) {
-        if (index + length < (input.length())) index += length;
+    /**
+     *  used to get the last parameter of statement from the input
+     * @return String
+     */
+    private String getStatementLastParameter() {
+        return getBeforeTokens(new HashSet<>(Tokens.END_STATEMENT));
+    }
+
+    /**
+     *  used to get the factor value of the equation from the input
+     * @return String
+     */
+    private String getFactor() {
+        return getBeforeTokens(new HashSet<>(Tokens.FACTOR_SPLITTERS));
     }
 
 
+    /**
+     * the method we should call to start parsing the input
+     */
     public void parse() {
         if (program()) {
             System.out.println("legal syntax");
@@ -95,6 +151,10 @@ public class RecursiveDescentParser {
         }
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean program() {
         if (body()) {
             if (input.substring(index).equals(Tokens.END_OF_FILE)) {
@@ -104,6 +164,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean body() {
         if (libDecl()) {
             if (matchString(Tokens.MAIN)) {
@@ -118,7 +182,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
-
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean libDecl() {
         String libS = input.split(Tokens.MAIN)[0];
         if (matchRegex(libS, Rejexes.LIBRARIES)) {
@@ -128,6 +195,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean declaration() {
         while (matchString(Tokens.CONST)) {
             next(Tokens.CONST.length());
@@ -141,6 +212,10 @@ public class RecursiveDescentParser {
     }
 
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean constDecl() {
         if (dataType()) {
             String name = getBeforeToken(Tokens.EQUAL);
@@ -155,6 +230,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     public boolean varDecl() {
         if (dataType()) {
             if (nameList()) {
@@ -165,6 +244,10 @@ public class RecursiveDescentParser {
     }
 
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean dataType() {
         if (matchString(Tokens.INT)) {
             next(Tokens.INT.length());
@@ -178,6 +261,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean nameList() {
         String names = getBeforeToken(Tokens.SEMICOLON);
         if (matchRegex(names, Rejexes.NAME_LIST)) {
@@ -188,6 +275,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean value() {
         String value = getBeforeToken(Tokens.SEMICOLON);
         if (currentVarType == VarType.Int) {
@@ -206,6 +297,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean block() {
         if (matchString(Tokens.OPEN_BRACE)) {
             next(Tokens.OPEN_BRACE.length());
@@ -219,6 +314,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean stmtList() {
         while (!matchString(Tokens.CLOSE_BRACE)) {
             if (!statement()) return false;
@@ -226,6 +325,10 @@ public class RecursiveDescentParser {
         return true;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean statement() {
         if (matchString(Tokens.OPEN_BRACE)) {
             if (!block()) return false;
@@ -241,6 +344,10 @@ public class RecursiveDescentParser {
         return true;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean assignStatement() {
         String name = getBeforeToken(Tokens.EQUAL);
         if (matchRegex(name, Rejexes.NAME)) {
@@ -253,6 +360,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean exp() {
         if (term()) {
             while (addSign()) {
@@ -265,6 +376,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean term() {
         if (factor()) {
             while (mulSign()) {
@@ -276,14 +391,26 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean addSign() {
         return (matchString("+") || matchString("-"));
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean mulSign() {
         return (matchString("*") || matchString("/") || matchString("%"));
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean factor() {
         if (matchString(Tokens.OPEN_PARENTHESES)) {
             next(Tokens.OPEN_PARENTHESES.length());
@@ -301,14 +428,11 @@ public class RecursiveDescentParser {
         return false;
     }
 
-    private String getStatementLastParameter() {
-        return getBeforeTokens(new HashSet<>(Tokens.END_STATEMENT));
-    }
 
-    private String getFactor() {
-        return getBeforeTokens(new HashSet<>(Tokens.FACTOR_SPLITTERS));
-    }
-
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean ifStatement() {
         next(Tokens.IF.length());
         if (matchString(Tokens.OPEN_PARENTHESES)) {
@@ -330,6 +454,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean booleanExpresion() {
         String parm1 = getBeforeTokens(Tokens.RELATIONAL_OPERATIONS);
         // if we got a name with length > 0 then for sure one of the tokens exist
@@ -351,6 +479,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean elsePart() {
         if (matchString(Tokens.ELSE)) {
             next(Tokens.ELSE.length());
@@ -363,6 +495,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean inOutStatement() {
         if (matchString(Tokens.INPUT)) {
             next(Tokens.INPUT.length());
@@ -386,6 +522,10 @@ public class RecursiveDescentParser {
         return false;
     }
 
+    /**
+     * non-terminal function
+     * @return boolean
+     */
     private boolean whileStatement() {
         if (matchString(Tokens.WHILE)) {
             next(Tokens.WHILE.length());
