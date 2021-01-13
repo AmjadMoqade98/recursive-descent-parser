@@ -40,9 +40,9 @@ public class RecursiveDescentParser {
         Float,
     }
 
-    // out code input
+    // input code to parse String
     private String input;
-    // pointer to the code
+    // pointer to the input code
     private int index = 0;
 
     // used after var declaration to check if value should be float of int.
