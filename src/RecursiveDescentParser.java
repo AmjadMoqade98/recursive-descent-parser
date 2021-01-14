@@ -187,7 +187,7 @@ public class RecursiveDescentParser {
      * @return boolean
      */
     private boolean libDecl() {
-        String libS = input.split(Tokens.MAIN)[0];
+        String libS = getBeforeToken(Tokens.MAIN);
         if (matchRegex(libS, Rejexes.LIBRARIES)) {
             next(libS.length());
             return true;
@@ -543,5 +543,4 @@ public class RecursiveDescentParser {
         }
         return false;
     }
-
 }
