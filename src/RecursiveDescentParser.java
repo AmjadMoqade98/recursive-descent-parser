@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * value   “float-number”   |        “int-number”
  * add-sign   +    |   -
  * mul-sign  *    |    /   |   %
- * inout-stmt input    >>    name         |    output     <<    name-value
+ * inout-stmt code    >>    name         |    output     <<    name-value
  * if-stmt  if   (   bool-exp  )  statement     else-part     endif
  * else-part   else     statement   |   
  * while-stmt  while   (   bool-exp    )   {    stmt-list    }
@@ -40,48 +40,56 @@ public class RecursiveDescentParser {
         Float,
     }
 
-    // out code input
-    private String input;
+    // out code code
+    private String code;
     // pointer to the code
-    private int index = 0;
+    private int codePointer = 0;
 
     // used after var declaration to check if value should be float of int.
     private VarType currentVarType;
 
+    //list to store errors
+    private List<String> errorStack = new ArrayList<>();
+
+    // set to store the user defined names
+    private Map<String, VarType> userDefindNames = new HashMap();
+
     /**
      * constructor
-     * @param input
+     *
+     * @param code
      */
-    public RecursiveDescentParser(String input) {
-        input = input.replaceAll("\n", "");
-        input = input.replaceAll("\r", "");
-        input = input.replaceAll(" ", "");
-        this.input = input;
+    public RecursiveDescentParser(String code) {
+        code = code.replaceAll("\n", "");
+        code = code.replaceAll("\r", "");
+        code = code.replaceAll(" ", "");
+        this.code = code;
     }
 
     /**
-     * increment our input pointer by specific value
+     * increment our code pointer by specific value
+     *
      * @param length
      */
     private void next(int length) {
-        if (index + length < (input.length())) index += length;
+        if (codePointer + length < (code.length())) codePointer += length;
     }
 
 
     /**
-     *
      * @param word
      * @return boolean
-     * to find if our input at specific index match a certain string
+     * to find if our code at specific index match a certain string
      */
     private boolean matchString(String word) {
-        if (index + word.length() >= input.length()) return false;
-        if (word.length() == 1) return input.charAt(index) == word.charAt(0);
-        return input.substring(index, index + word.length()).equals(word);
+        try {
+            return code.substring(codePointer, codePointer + word.length()).equals(word);
+        } catch (StringIndexOutOfBoundsException e) {
+            return false;
+        }
     }
 
     /**
-     *
      * @param target
      * @param regex
      * @return boolean
@@ -92,39 +100,46 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * get our input from current pointer
+     * get our code from current pointer
+     *
      * @param token
      * @return Strin
      */
     private String getBeforeToken(String token) {
-        if (index + token.length() >= input.length()) return "";
-        return input.substring(index, input.substring(index).indexOf(token) + index);
+        try {
+            return code.substring(codePointer, code.substring(codePointer).indexOf(token) + codePointer);
+        } catch (StringIndexOutOfBoundsException e) {
+            return "";
+        }
     }
 
     /**
-     * get String from our input from current pointer until we reach a certain token(string)
+     * get String from our code from current pointer until we reach a certain token(string)
+     *
      * @param tokens
      * @return String
      */
     private String getBeforeTokens(Set<String> tokens) {
         List<Character> list = new ArrayList<>();
-        int tempIndex = index;
-        while (index < input.length()) {
+        int tempIndex = codePointer;
+        while (codePointer < code.length()) {
             for (String token : tokens) {
                 if (matchString(token)) {
+                    codePointer = tempIndex;
                     return list.stream().map(String::valueOf).collect(Collectors.joining());
                 }
             }
-            list.add(input.charAt(index));
+            list.add(code.charAt(codePointer));
             next(1);
         }
-        index = tempIndex;
-        if (index >= input.length()) return "";
+        codePointer = tempIndex;
+        if (codePointer >= code.length()) return "";
         return list.stream().map(String::valueOf).collect(Collectors.joining());
     }
 
     /**
-     *  used to get the last parameter of statement from the input
+     * used to get the last parameter of statement from the code
+     *
      * @return String
      */
     private String getStatementLastParameter() {
@@ -132,32 +147,58 @@ public class RecursiveDescentParser {
     }
 
     /**
-     *  used to get the factor value of the equation from the input
+     * used to get the factor value of the equation from the code
+     *
      * @return String
      */
-    private String getFactor() {
+    private String getEquationFactor() {
         return getBeforeTokens(new HashSet<>(Tokens.FACTOR_SPLITTERS));
     }
 
+    private boolean isNameExist(String name) {
+        return userDefindNames.containsKey(name);
+    }
+
+    private boolean isNameAvailable(String name) {
+        return !userDefindNames.containsKey(name);
+    }
+
+    private boolean isReservedWord(String name) {
+        return Tokens.RESERVED_WORDS.contains(name);
+    }
 
     /**
-     * the method we should call to start parsing the input
+     * method to print the error stack
+     *
+     * @param error
+     */
+    private void error(String error) {
+        errorStack.add(error);
+    }
+
+    /**
+     * the method we should call to start parsing the code
      */
     public void parse() {
         if (program()) {
-            System.out.println("legal syntax");
+            System.out.println("valid syntax");
         } else {
-            System.out.println("illegal syntax");
+            System.out.println("invalid syntax");
+            Collections.reverse(errorStack);
+            for (String error : errorStack){
+                System.out.println(error);
+            }
         }
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean program() {
         if (body()) {
-            if (input.substring(index).equals(Tokens.END_OF_FILE)) {
+            if (code.substring(codePointer).equals(Tokens.END_OF_FILE)) {
                 return true;
             }
         }
@@ -166,6 +207,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean body() {
@@ -175,15 +217,24 @@ public class RecursiveDescentParser {
                 if (declaration()) {
                     if (block()) {
                         return true;
+                    } else {
+                        error("error in the body declaration");
                     }
+                } else {
+                    error("error in the variables declaration");
                 }
+            } else {
+                error("error in the main declaration");
             }
+        } else {
+            error("error in the libraries declaration");
         }
         return false;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean libDecl() {
@@ -191,22 +242,31 @@ public class RecursiveDescentParser {
         if (matchRegex(libS, Rejexes.LIBRARIES)) {
             next(libS.length());
             return true;
+        } else {
+            error("error in the libraries declaration");
         }
         return false;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean declaration() {
         while (matchString(Tokens.CONST)) {
             next(Tokens.CONST.length());
-            if (!constDecl()) return false;
+            if (!constDecl()) {
+                error("error in the const declaration");
+                return false;
+            }
         }
         while (matchString(Tokens.VAR)) {
             next(Tokens.VAR.length());
-            if (!varDecl()) return false;
+            if (!varDecl()) {
+                error("error in the vars declaration");
+                return false;
+            }
         }
         return true;
     }
@@ -214,31 +274,44 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean constDecl() {
         if (dataType()) {
             String name = getBeforeToken(Tokens.EQUAL);
-            if (matchRegex(name, Rejexes.NAME)) {
+            if (matchRegex(name, Rejexes.NAME) && !isReservedWord(name) && isNameAvailable(name)) {
                 next(name.length());
+                userDefindNames.put(name, currentVarType);
                 next(Tokens.EQUAL.length());
                 if (value()) {
                     return true;
+                } else {
+                    error("error in the value of consts declaration");
                 }
+            } else {
+                error("error in the name of consts declaration");
             }
+        } else {
+            error("error in the datatype of consts declaration");
         }
         return false;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     public boolean varDecl() {
         if (dataType()) {
             if (nameList()) {
                 return true;
+            } else {
+                error("error in the name list of vars declaration");
             }
+        } else {
+            error("error in the datatype of vars declaration");
         }
         return false;
     }
@@ -246,6 +319,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean dataType() {
@@ -258,36 +332,48 @@ public class RecursiveDescentParser {
             currentVarType = VarType.Float;
             return true;
         }
+        error("error in the datatype declaration");
         return false;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean nameList() {
         String names = getBeforeToken(Tokens.SEMICOLON);
-        if (matchRegex(names, Rejexes.NAME_LIST)) {
-            next(names.length());
-            next(Tokens.SEMICOLON.length());
-            return true;
+        int numberOfCommas = names.split(",").length - 1;
+        for (String name : names.split(",")) {
+            if (matchRegex(name, Rejexes.NAME) && !isReservedWord(name) && isNameAvailable(name)) {
+                next(name.length());
+                userDefindNames.put(name, currentVarType);
+                if (numberOfCommas > 0) {
+                    next(1);
+                    numberOfCommas--;
+                }
+            } else {
+                return false;
+            }
         }
-        return false;
+        next(Tokens.SEMICOLON.length());
+        return true;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean value() {
         String value = getBeforeToken(Tokens.SEMICOLON);
         if (currentVarType == VarType.Int) {
-            if (matchRegex(value, Rejexes.INT)) {
+            if (StringValidation.isInteger(value)) {
                 next(value.length());
                 next(Tokens.SEMICOLON.length());
                 return true;
             }
-        } else if (currentVarType == VarType.Float) {
+        } else if (StringValidation.isFloat(value)) {
             if (matchRegex(value, Rejexes.FLOAT)) {
                 next(value.length());
                 next(1);
@@ -299,6 +385,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean block() {
@@ -308,83 +395,134 @@ public class RecursiveDescentParser {
                 if (matchString(Tokens.CLOSE_BRACE)) {
                     next(Tokens.CLOSE_BRACE.length());
                     return true;
+                } else {
+                    error("error in the block declaration missing }");
                 }
+            } else {
+                error("error in the statement list");
+
             }
+        } else {
+            error("error in the block declaration missing {");
         }
         return false;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean stmtList() {
         while (!matchString(Tokens.CLOSE_BRACE)) {
-            if (!statement()) return false;
+            if (!statement()) {
+                error("error in the statement declaration ");
+                return false;
+            }
+            if (matchString(Tokens.SEMICOLON)) {
+                next(Tokens.SEMICOLON.length());
+                if (matchString(Tokens.CLOSE_BRACE)) {
+                    error("error in the statement declaration ; after last statement");
+                    return false;
+                }
+            } else {
+                if (!matchString(Tokens.CLOSE_BRACE)) {
+                    error("error in the statement declaration there is no ;");
+                    return false;
+                }
+            }
         }
         return true;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean statement() {
         if (matchString(Tokens.OPEN_BRACE)) {
-            if (!block()) return false;
+            if (!block()) {
+                error("error in the block statement declaration ");
+                return false;
+            }
         } else if (matchString(Tokens.IF)) {
-            if (!ifStatement()) return false;
+            if (!ifStatement()) {
+                error("error in the if statement declaration ");
+                return false;
+            }
         } else if (matchString(Tokens.WHILE)) {
-            if (!whileStatement()) return false;
+            if (!whileStatement()) {
+                error("error in the while statement declaration ");
+                return false;
+            }
         } else if (matchString(Tokens.INPUT) || matchString(Tokens.OUTPUT)) {
-            if (!inOutStatement()) return false;
-        } else if (!assignStatement()) return false;
+            if (!inOutStatement()) {
+                error("error in the io statement declaration ");
+                return false;
+            }
+        } else if (!assignStatement()) {
+            error("error in the assign statement declaration ");
+            return false;
+        }
 
-        if (matchString(Tokens.SEMICOLON)) next(Tokens.SEMICOLON.length());
         return true;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean assignStatement() {
         String name = getBeforeToken(Tokens.EQUAL);
-        if (matchRegex(name, Rejexes.NAME)) {
+        if (matchRegex(name, Rejexes.NAME) && isNameExist(name)) {
             next(name.length());
             next(Tokens.EQUAL.length());
+            currentVarType = userDefindNames.get(name);
             if (exp()) {
                 return true;
+            } else {
+                error("error in the assign statement exp declaration ");
             }
+        } else {
+            error("error in the assign statement name declaration ");
         }
         return false;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean exp() {
         if (term()) {
             while (addSign()) {
                 next(1);
-                if (!term()) return false;
+                if (!term()) {
+                    error("error in the add operation declaration ");
+                    return false;
+                }
             }
             return true;
         }
-
         return false;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean term() {
         if (factor()) {
             while (mulSign()) {
                 next(1);
-                if (!factor()) return false;
+                if (!factor()) {
+                    error("error in the mul operation declaration ");
+                    return false;
+                }
             }
             return true;
         }
@@ -393,6 +531,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean addSign() {
@@ -401,14 +540,17 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean mulSign() {
         return (matchString("*") || matchString("/") || matchString("%"));
     }
 
+
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean factor() {
@@ -420,35 +562,66 @@ public class RecursiveDescentParser {
                 return true;
             }
         } else {
-            String factor = getFactor();
-            if (matchRegex(factor, Rejexes.FLOAT) || matchRegex(factor, Rejexes.NAME)) {
+            String factor = getEquationFactor();
+            if (Character.isDigit(factor.charAt(0))) {
+                if (!StringValidation.isInteger(factor) && currentVarType == VarType.Int) {
+                    error("error in the factor value, non integer assigned to integer ");
+                    return false;
+                } else {
+                    if (StringValidation.isFloat(factor) || StringValidation.isInteger(factor)) {
+                        next(factor.length());
+                        return true;
+                    }
+                    error("error in the factor value, non number assigned to number ");
+                    return false;
+                }
+            } else if (isNameExist(factor)) {
+                next(factor.length());
                 return true;
+            }else {
+                error("name not exist");
             }
         }
+        error("error in the factor name");
         return false;
     }
 
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean ifStatement() {
-        next(Tokens.IF.length());
-        if (matchString(Tokens.OPEN_PARENTHESES)) {
-            next(Tokens.OPEN_PARENTHESES.length());
-            if (booleanExpresion()) {
-                if (matchString(Tokens.CLOSE_PARENTHESE)) {
-                    next(Tokens.CLOSE_PARENTHESE.length());
-                    if (statement()) {
-                        if (elsePart()) {
-                            if (matchString(Tokens.ENDIF)) {
-                                next(Tokens.ENDIF.length());
-                                return true;
+        if (matchString(Tokens.IF)) {
+            next(Tokens.IF.length());
+            if (matchString(Tokens.OPEN_PARENTHESES)) {
+                next(Tokens.OPEN_PARENTHESES.length());
+                if (booleanExpresion()) {
+                    if (matchString(Tokens.CLOSE_PARENTHESE)) {
+                        next(Tokens.CLOSE_PARENTHESE.length());
+                        if (statement()) {
+                            if (elsePart()) {
+                                if (matchString(Tokens.ENDIF)) {
+                                    next(Tokens.ENDIF.length());
+                                    return true;
+                                } else {
+                                    error("missing endif");
+                                }
+                            } else {
+                                error("error in the else");
                             }
+                        } else {
+                            error("error in the if statement");
                         }
+                    } else {
+                        error("missing )");
                     }
+                } else {
+                    error("error in the boolean expression");
                 }
+            } else {
+                error("missing (");
             }
         }
         return false;
@@ -456,24 +629,30 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean booleanExpresion() {
         String parm1 = getBeforeTokens(Tokens.RELATIONAL_OPERATIONS);
         // if we got a name with length > 0 then for sure one of the tokens exist
-        if (matchRegex(parm1, Rejexes.NAME) || matchRegex(parm1, Rejexes.FLOAT)) {
-            // since the relational operation length can be 1 or 2
-            if (Tokens.RELATIONAL_OPERATIONS.contains(input.substring(index, index + 2))) {
-                next(2);
-            } else {
+        if (isNameExist(parm1) || StringValidation.isValue(parm1)) {
+            next(parm1.length());
+            next(1);
+            if (code.charAt(codePointer) == '=') {
                 next(1);
             }
-
-
             String parm2 = getBeforeToken(Tokens.CLOSE_PARENTHESE);
-            if (matchRegex(parm2, Rejexes.NAME) || matchRegex(parm2, Rejexes.FLOAT)) {
+            if (isNameExist(parm2) || matchRegex(parm2, Rejexes.FLOAT)) {
                 next(parm2.length());
                 return true;
+            }else {
+                error("error in the second parameter");
+            }
+        } else{
+            if(isNameExist(parm1) || StringValidation.isValue(parm1)) {
+                error("error in the RELATIONAL OPERATIONS ");
+            }else {
+                error("error in the first parameter");
             }
         }
         return false;
@@ -481,6 +660,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean elsePart() {
@@ -491,12 +671,15 @@ public class RecursiveDescentParser {
             } else if (statement()) {
                 return true;
             }
+        }else {
+            error("else is missing");
         }
         return false;
     }
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean inOutStatement() {
@@ -505,18 +688,28 @@ public class RecursiveDescentParser {
             if (matchString(">>")) {
                 next(2);
                 String name = getStatementLastParameter();
-                if (matchRegex(name, Rejexes.NAME)) {
+                if (isNameExist(name)) {
+                    next(name.length());
                     return true;
+                } else {
+                    error("error in the input parameter");
                 }
+            } else{
+                error("missing >> for input statement");
             }
         } else if (matchString(Tokens.OUTPUT)) {
             next(Tokens.OUTPUT.length());
             if (matchString("<<")) {
                 next(2);
-                String outputParameter = getStatementLastParameter();
-                if (matchRegex(outputParameter, Rejexes.NAME) || matchRegex(outputParameter, Rejexes.FLOAT)) {
+                String value_name = getStatementLastParameter();
+                if (isNameExist(value_name) || StringValidation.isValue(value_name)) {
+                    next(value_name.length());
                     return true;
+                } else {
+                    error("error in the output parameter");
                 }
+            }else {
+                error("<< is missing for output");
             }
         }
         return false;
@@ -524,6 +717,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     *
      * @return boolean
      */
     private boolean whileStatement() {
@@ -537,8 +731,12 @@ public class RecursiveDescentParser {
                         if (block()) {
                             return true;
                         }
+                    }else{
+                        error("missing )");
                     }
                 }
+            }else {
+                error("missing (");
             }
         }
         return false;

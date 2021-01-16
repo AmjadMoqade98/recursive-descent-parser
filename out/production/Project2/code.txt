@@ -3,18 +3,16 @@
 
 main()
 const float bi=3.14;
+const int biz=3.2;
 var int num,count;
-var float r;
-var int x1;
 var float x;
-{
- x=(((s*y)+((x/2))))
-
-    input>>num;
-   if (num !=0)
-       x=bi*2
+var float y;
+{ input>>num;
+   if (num != x)
+        count=count*2
    else
-        x=x*3;
+        x=num*3
    endif;
-   output<<x;
+   output<<x
 }  $
+

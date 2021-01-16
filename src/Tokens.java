@@ -1,4 +1,5 @@
 import java.util.*;
+
 /**
  * Constant class for the used Tokens in the program
  */
@@ -21,10 +22,19 @@ public class Tokens {
     final static String END_OF_FILE = "$";
     final static String EQUAL = "=";
     final static String SEMICOLON = ";";
-    final static Set<String> RELATIONAL_OPERATIONS = new HashSet<>(Arrays.asList("==" , "!=" , "<" , "<=" ,">" ,">=")) ;
-    final static List<String> END_STATEMENT = new ArrayList<>(Arrays.asList(Tokens.IF,Tokens.ELSE ,Tokens.ENDIF,Tokens.CLOSE_BRACE,Tokens.SEMICOLON));
-    final static List<String> ADD_OPERATORS = new ArrayList<>(Arrays.asList("+" ,"-"));
-    final static List<String> MUL_OPERATORS = new ArrayList<>(Arrays.asList("*" ,"/" ,"%"));
-    final static List<String> FACTOR_SPLITTERS = new ArrayList<>(){{addAll(ADD_OPERATORS);addAll(MUL_OPERATORS);addAll(END_STATEMENT);addAll(Arrays.asList(")"));}};
+    final static Set<String> RELATIONAL_OPERATIONS = new HashSet<>(Arrays.asList("==", "!=", "<", "<=", ">", ">="));
+    final static List<String> END_STATEMENT = new ArrayList<>(Arrays.asList(Tokens.IF, Tokens.ELSE, Tokens.ENDIF, Tokens.CLOSE_BRACE, Tokens.SEMICOLON));
+    final static List<String> ADD_OPERATORS = new ArrayList<>(Arrays.asList("+", "-"));
+    final static List<String> MUL_OPERATORS = new ArrayList<>(Arrays.asList("*", "/", "%"));
+    final static List<String> FACTOR_SPLITTERS = new ArrayList<>() {{
+        addAll(ADD_OPERATORS);
+        addAll(MUL_OPERATORS);
+        addAll(END_STATEMENT);
+        addAll(Arrays.asList(")"));
+    }};
+    final static Set<String> RESERVED_WORDS = new HashSet<>(Arrays.asList(
+            Tokens.MAIN, Tokens.CONST, Tokens.VAR, Tokens.INT, Tokens.FLOAT, Tokens.INPUT, Tokens.OUTPUT, Tokens.IF,
+            Tokens.ELSE, Tokens.WHILE
+    ));
 
 }
