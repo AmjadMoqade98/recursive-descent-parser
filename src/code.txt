@@ -16,5 +16,6 @@ var float y;
  else
  x=2
  endif;
+x =2+(2*5)*(2+3)
 }  $
 
