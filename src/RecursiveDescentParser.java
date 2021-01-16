@@ -72,7 +72,7 @@ public class RecursiveDescentParser {
      * @param length
      */
     private void next(int length) {
-        if (codePointer + length < (code.length())) codePointer += length;
+       codePointer += length;
     }
 
 
@@ -90,17 +90,18 @@ public class RecursiveDescentParser {
     }
 
     /**
+     * check if a given string match a regex
+     *
      * @param target
      * @param regex
      * @return boolean
-     * check if a given string match a regex
      */
     private boolean matchRegex(String target, String regex) {
         return Pattern.compile(regex).matcher(target).matches();
     }
 
     /**
-     * get our code from current pointer
+     * get our code from current pointer until specific token occurs
      *
      * @param token
      * @return Strin
@@ -192,6 +193,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * program     body   $
      *
      * @return boolean
      */
@@ -206,6 +208,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * body    lib-decl    main ()   declarations   block
      *
      * @return boolean
      */
@@ -233,6 +236,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * (  # include < name >   ;   )*
      *
      * @return boolean
      */
@@ -249,6 +253,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * declarations   const-decl   var-decl
      *
      * @return boolean
      */
@@ -273,6 +278,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * (  const data-type name= value ; )*
      *
      * @return boolean
      */
@@ -299,6 +305,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * var-decl     (  var    data-type    name-list   ;   )*
      *
      * @return boolean
      */
@@ -318,6 +325,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * data-type     int     |       float
      *
      * @return boolean
      */
@@ -337,6 +345,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * name-list     name   (  ,   name  )*
      *
      * @return boolean
      */
@@ -361,6 +370,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * value   “float-number”   |  “int-number”
      *
      * @return boolean
      */
@@ -384,6 +394,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * block    {    stmt-list    }
      *
      * @return boolean
      */
@@ -409,26 +420,21 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * stmt-list    statement (  ; statement   )*
      *
      * @return boolean
      */
     private boolean stmtList() {
         while (!matchString(Tokens.CLOSE_BRACE)) {
+            while (matchString(Tokens.SEMICOLON)) {
+                next(Tokens.SEMICOLON.length());
+            }
             if (!statement()) {
                 error("error in the statement declaration ");
                 return false;
             }
-            if (matchString(Tokens.SEMICOLON)) {
+            while (matchString(Tokens.SEMICOLON)) {
                 next(Tokens.SEMICOLON.length());
-                if (matchString(Tokens.CLOSE_BRACE)) {
-                    error("there is ; after last statement");
-                    return false;
-                }
-            } else {
-                if (!matchString(Tokens.CLOSE_BRACE)) {
-                    error("missing ;");
-                    return false;
-                }
             }
         }
         return true;
@@ -436,10 +442,18 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * statement  ass-stmt |  inout-stmt   | if-stmt  | while-stmt |  block  |  @
      *
      * @return boolean
      */
     private boolean statement() {
+        // null statement
+        for(String token : Tokens.END_STATEMENT){
+            if(matchString(token)){
+                return true;
+            }
+        }
+
         if (matchString(Tokens.OPEN_BRACE)) {
             if (!block()) {
                 error("error in the block statement declaration ");
@@ -464,12 +478,12 @@ public class RecursiveDescentParser {
             error("error in the assign statement declaration ");
             return false;
         }
-
         return true;
     }
 
     /**
      * non-terminal function
+     * ass-stmt  name =  exp
      *
      * @return boolean
      */
@@ -492,12 +506,13 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * exp  term  (  add-oper   term  )*
      *
      * @return boolean
      */
     private boolean exp() {
         if (term()) {
-            while (addSign()) {
+            while (addOper()) {
                 next(1);
                 if (!term()) {
                     error("error in the add operation declaration ");
@@ -511,12 +526,13 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
-     *
+     * term  factor   ( mul-oper  factor )*
+     * 
      * @return boolean
      */
     private boolean term() {
         if (factor()) {
-            while (mulSign()) {
+            while (mulOper()) {
                 next(1);
                 if (!factor()) {
                     error("error in the mul operation declaration ");
@@ -530,25 +546,27 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
-     *
+     * add-oper   +    |   -
      * @return boolean
      */
-    private boolean addSign() {
+    private boolean addOper() {
         return (matchString("+") || matchString("-"));
     }
 
     /**
      * non-terminal function
+     * mul-oper  *    |    /   |   %
      *
      * @return boolean
      */
-    private boolean mulSign() {
+    private boolean mulOper() {
         return (matchString("*") || matchString("/") || matchString("%"));
     }
 
 
     /**
      * non-terminal function
+     * factor   (  exp  ) |  name  | value
      *
      * @return boolean
      */
@@ -562,7 +580,7 @@ public class RecursiveDescentParser {
             }
         } else {
             String factor = getEquationFactor();
-            if(factor.length() == 0) {
+            if (factor.length() == 0) {
                 error("factor is missing or there is wrong text before factor");
                 return false;
             }
@@ -581,7 +599,7 @@ public class RecursiveDescentParser {
             } else if (isNameExist(factor)) {
                 next(factor.length());
                 return true;
-            }else {
+            } else {
                 error("name not exist");
             }
         }
@@ -592,6 +610,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * if-stmt  if (  bool-exp  )  statement  else-part  endif
      *
      * @return boolean
      */
@@ -632,6 +651,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * bool-exp  name-value  relational-oper  name-vaue
      *
      * @return boolean
      */
@@ -648,13 +668,13 @@ public class RecursiveDescentParser {
             if (isNameExist(parm2) || matchRegex(parm2, Rejexes.FLOAT)) {
                 next(parm2.length());
                 return true;
-            }else {
+            } else {
                 error("error in the second parameter");
             }
-        } else{
-            if(isNameExist(parm1) || StringValidation.isValue(parm1)) {
+        } else {
+            if (isNameExist(parm1) || StringValidation.isValue(parm1)) {
                 error("error in the RELATIONAL OPERATIONS ");
-            }else {
+            } else {
                 error("error in the first parameter");
             }
         }
@@ -663,25 +683,21 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
+     * else-part   else statement |  @
      *
      * @return boolean
      */
     private boolean elsePart() {
         if (matchString(Tokens.ELSE)) {
             next(Tokens.ELSE.length());
-            if (matchString(Tokens.ENDIF)) {
-                return true;
-            } else if (statement()) {
-                return true;
-            }
-        }else {
-            error("else is missing or or there is wrong text before else");
+            if (statement()) {}
         }
-        return false;
+        return true;
     }
 
     /**
      * non-terminal function
+     * inout-stmt input  >>   name  | output   <<  name-value
      *
      * @return boolean
      */
@@ -697,7 +713,7 @@ public class RecursiveDescentParser {
                 } else {
                     error("error in the input parameter");
                 }
-            } else{
+            } else {
                 error("missing >> for input statement or there is wrong text before >>");
             }
         } else if (matchString(Tokens.OUTPUT)) {
@@ -711,7 +727,7 @@ public class RecursiveDescentParser {
                 } else {
                     error("error in the output parameter");
                 }
-            }else {
+            } else {
                 error("<< is missing for output or there is wrong text before <<");
             }
         }
@@ -720,7 +736,7 @@ public class RecursiveDescentParser {
 
     /**
      * non-terminal function
-     *
+     * while-stmt  while  ( bool-exp  )  {  stmt-list }
      * @return boolean
      */
     private boolean whileStatement() {
@@ -734,11 +750,11 @@ public class RecursiveDescentParser {
                         if (block()) {
                             return true;
                         }
-                    }else{
+                    } else {
                         error("missing ) or there is wrong text before )");
                     }
                 }
-            }else {
+            } else {
                 error("missing ( or there is wrong text before (");
             }
         }

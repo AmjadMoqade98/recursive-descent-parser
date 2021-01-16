@@ -3,16 +3,11 @@
 
 main()
 const float bi=3.14;
-const int bi=3;
+const int bi2=3;
 var int num,count;
 var float x;
 var float y;
-{ input>>num;
-   if (num != x)
-        count=count*2
-   else
-        x=num*2
-   endif;
-   output<<x
+{
+x =2+(2*5)*(2+3)
 }  $
 
