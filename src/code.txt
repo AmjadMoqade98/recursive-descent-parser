@@ -3,7 +3,7 @@
 
 main()
 const float bi=3.14;
-const int biz=3.2;
+const int bi=3;
 var int num,count;
 var float x;
 var float y;
@@ -11,7 +11,7 @@ var float y;
    if (num != x)
         count=count*2
    else
-        x=num*3
+        x=num*2
    endif;
    output<<x
 }  $

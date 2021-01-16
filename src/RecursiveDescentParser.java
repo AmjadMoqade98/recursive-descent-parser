@@ -184,10 +184,9 @@ public class RecursiveDescentParser {
             System.out.println("valid syntax");
         } else {
             System.out.println("invalid syntax");
-            Collections.reverse(errorStack);
-            for (String error : errorStack){
-                System.out.println(error);
-            }
+//            Collections.reverse(errorStack);
+            // print the first log of the occurred error
+            System.out.println(errorStack.get(0));
         }
     }
 
@@ -396,14 +395,14 @@ public class RecursiveDescentParser {
                     next(Tokens.CLOSE_BRACE.length());
                     return true;
                 } else {
-                    error("error in the block declaration missing }");
+                    error("missing } or there is wrong text before }");
                 }
             } else {
                 error("error in the statement list");
 
             }
         } else {
-            error("error in the block declaration missing {");
+            error("missing { or there is wrong text before }");
         }
         return false;
     }
@@ -422,12 +421,12 @@ public class RecursiveDescentParser {
             if (matchString(Tokens.SEMICOLON)) {
                 next(Tokens.SEMICOLON.length());
                 if (matchString(Tokens.CLOSE_BRACE)) {
-                    error("error in the statement declaration ; after last statement");
+                    error("there is ; after last statement");
                     return false;
                 }
             } else {
                 if (!matchString(Tokens.CLOSE_BRACE)) {
-                    error("error in the statement declaration there is no ;");
+                    error("missing ;");
                     return false;
                 }
             }
@@ -563,6 +562,10 @@ public class RecursiveDescentParser {
             }
         } else {
             String factor = getEquationFactor();
+            if(factor.length() == 0) {
+                error("factor is missing or there is wrong text before factor");
+                return false;
+            }
             if (Character.isDigit(factor.charAt(0))) {
                 if (!StringValidation.isInteger(factor) && currentVarType == VarType.Int) {
                     error("error in the factor value, non integer assigned to integer ");
@@ -606,7 +609,7 @@ public class RecursiveDescentParser {
                                     next(Tokens.ENDIF.length());
                                     return true;
                                 } else {
-                                    error("missing endif");
+                                    error("missing endif or there is wrong text before endif");
                                 }
                             } else {
                                 error("error in the else");
@@ -615,13 +618,13 @@ public class RecursiveDescentParser {
                             error("error in the if statement");
                         }
                     } else {
-                        error("missing )");
+                        error("missing ) or there is wrong text before )");
                     }
                 } else {
                     error("error in the boolean expression");
                 }
             } else {
-                error("missing (");
+                error("missing ( or there is wrong text before (");
             }
         }
         return false;
@@ -672,7 +675,7 @@ public class RecursiveDescentParser {
                 return true;
             }
         }else {
-            error("else is missing");
+            error("else is missing or or there is wrong text before else");
         }
         return false;
     }
@@ -695,7 +698,7 @@ public class RecursiveDescentParser {
                     error("error in the input parameter");
                 }
             } else{
-                error("missing >> for input statement");
+                error("missing >> for input statement or there is wrong text before >>");
             }
         } else if (matchString(Tokens.OUTPUT)) {
             next(Tokens.OUTPUT.length());
@@ -709,7 +712,7 @@ public class RecursiveDescentParser {
                     error("error in the output parameter");
                 }
             }else {
-                error("<< is missing for output");
+                error("<< is missing for output or there is wrong text before <<");
             }
         }
         return false;
@@ -732,11 +735,11 @@ public class RecursiveDescentParser {
                             return true;
                         }
                     }else{
-                        error("missing )");
+                        error("missing ) or there is wrong text before )");
                     }
                 }
             }else {
-                error("missing (");
+                error("missing ( or there is wrong text before (");
             }
         }
         return false;
