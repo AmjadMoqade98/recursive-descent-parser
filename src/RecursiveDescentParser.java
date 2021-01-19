@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * name       “user-defined-name”
  * block    {    stmt-list    }
  * stmt-list      statement   (  ;     statement   )*
- * statement  ass-stmt     |     inout-stmt    |      if-stmt     |    while-stmt   |    block  |   
+ * statement  ass-stmt     |     inout-stmt    |      if-stmt     |    while-stmt   |    block  |
  * ass-stmt  name     =      exp
  * exp  term      (  add-oper   term  )*
  * term  factor   (  mul-oper    factor   )*
@@ -192,8 +192,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * program     body   $
+     * non-terminal function:  body   $
      *
      * @return boolean
      */
@@ -207,8 +206,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * body    lib-decl    main ()   declarations   block
+     * non-terminal function: lib-decl    main ()   declarations   block
      *
      * @return boolean
      */
@@ -235,8 +233,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * (  # include < name >   ;   )*
+     * non-terminal function: (  # include < name >   ;   )*
      *
      * @return boolean
      */
@@ -252,8 +249,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * declarations   const-decl   var-decl
+     * non-terminal function:  const-decl   var-decl
      *
      * @return boolean
      */
@@ -277,8 +273,7 @@ public class RecursiveDescentParser {
 
 
     /**
-     * non-terminal function
-     * (  const data-type name= value ; )*
+     * non-terminal function: ( const data-type name= value ; )*
      *
      * @return boolean
      */
@@ -304,8 +299,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * var-decl     (  var    data-type    name-list   ;   )*
+     * non-terminal function:  (  var    data-type    name-list   ;   )*
      *
      * @return boolean
      */
@@ -324,8 +318,7 @@ public class RecursiveDescentParser {
 
 
     /**
-     * non-terminal function
-     * data-type     int     |       float
+     * non-terminal function:  int     |       float
      *
      * @return boolean
      */
@@ -344,8 +337,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * name-list     name   (  ,   name  )*
+     * non-terminal function:  name   (  ,   name  )*
      *
      * @return boolean
      */
@@ -369,8 +361,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * value   “float-number”   |  “int-number”
+     * non-terminal function:   “float-number”   |  “int-number”
      *
      * @return boolean
      */
@@ -391,8 +382,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * block    {    stmt-list    }
+     * non-terminal function:  {    stmt-list    }
      *
      * @return boolean
      */
@@ -417,8 +407,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * stmt-list    statement (  ; statement   )*
+     * non-terminal function:  statement (  ; statement   )*
      *
      * @return boolean
      */
@@ -439,8 +428,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * statement  ass-stmt |  inout-stmt   | if-stmt  | while-stmt |  block  |  @
+     * non-terminal function:  ass-stmt |  inout-stmt   | if-stmt  | while-stmt |  block  |  @
      *
      * @return boolean
      */
@@ -480,8 +468,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * ass-stmt  name =  exp
+     * non-terminal function:  name =  exp
      *
      * @return boolean
      */
@@ -503,8 +490,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * exp  term  (  add-oper   term  )*
+     * non-terminal function:  term  (  add-oper   term  )*
      *
      * @return boolean
      */
@@ -523,8 +509,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * term  factor   ( mul-oper  factor )*
+     * non-terminal function:  factor   ( mul-oper  factor )*
      * 
      * @return boolean
      */
@@ -552,8 +537,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * mul-oper  *    |    /   |   %
+     * non-terminal function:  *    |    /   |   %
      *
      * @return boolean
      */
@@ -563,8 +547,7 @@ public class RecursiveDescentParser {
 
 
     /**
-     * non-terminal function
-     * factor   (  exp  ) |  name  | value
+     * non-terminal function:  (  exp  ) |  name  | value
      *
      * @return boolean
      */
@@ -607,8 +590,7 @@ public class RecursiveDescentParser {
 
 
     /**
-     * non-terminal function
-     * if-stmt  if (  bool-exp  )  statement  else-part  endif
+     * non-terminal function:  if (  bool-exp  )  statement  else-part  endif
      *
      * @return boolean
      */
@@ -648,8 +630,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * bool-exp  name-value  relational-oper  name-vaue
+     * non-terminal function:  name-value  relational-oper  name-vaue
      *
      * @return boolean
      */
@@ -680,8 +661,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * else-part   else statement |  @
+     * non-terminal function:  else statement |  @
      *
      * @return boolean
      */
@@ -694,8 +674,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * inout-stmt input  >>   name  | output   <<  name-value
+     * non-terminal function:  input  >>   name  | output   <<  name-value
      *
      * @return boolean
      */
@@ -733,8 +712,7 @@ public class RecursiveDescentParser {
     }
 
     /**
-     * non-terminal function
-     * while-stmt  while  ( bool-exp  )  {  stmt-list }
+     * non-terminal function:  while  ( bool-exp  )  {  stmt-list }
      * @return boolean
      */
     private boolean whileStatement() {

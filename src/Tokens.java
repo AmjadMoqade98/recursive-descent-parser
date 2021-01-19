@@ -36,5 +36,4 @@ public class Tokens {
             Tokens.MAIN, Tokens.CONST, Tokens.VAR, Tokens.INT, Tokens.FLOAT, Tokens.INPUT, Tokens.OUTPUT, Tokens.IF,
             Tokens.ELSE, Tokens.WHILE
     ));
-
 }
