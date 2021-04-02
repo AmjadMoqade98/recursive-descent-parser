@@ -53,6 +53,7 @@ public class RecursiveDescentParser {
     public RecursiveDescentParser(String code) {
         code = code.replaceAll("\n", "");
         code = code.replaceAll("\r", "");
+        code = code.replaceAll("\t", "");
         code = code.replaceAll(" ", "");
         this.code = code;
     }
