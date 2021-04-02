@@ -40,25 +40,16 @@ public class RecursiveDescentParser {
         Float,
     }
 
-    // out code code
     private String code;
-    // pointer to the code
     private int codePointer = 0;
 
-    // used after var declaration to check if value should be float of int.
     private VarType currentVarType;
 
-    //list to store errors
     private List<String> errorStack = new ArrayList<>();
 
-    // set to store the user defined names
     private Map<String, VarType> userDefindNames = new HashMap();
 
-    /**
-     * constructor
-     *
-     * @param code
-     */
+
     public RecursiveDescentParser(String code) {
         code = code.replaceAll("\n", "");
         code = code.replaceAll("\r", "");
