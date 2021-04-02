@@ -1,4 +1,4 @@
-this project is an implementation for Recursive Descent Parser for a the given Syntax:
+this project is an implementation for Recursive Descent Parser against the given Syntax:
 
   program ->    body   $
   body  ->  lib-decl       main ()       declarations      block
